@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mi Negocio — Panel</title>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --card: #ffffff;
+      --text: #1f2430;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --brand: #2563eb;
+      --brand-dark: #1d4ed8;
+      --green: #059669;
+      --red: #dc2626;
+      --amber: #d97706;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+    }
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header .logo {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--brand), #7c3aed);
+      display: grid; place-items: center;
+      color: #fff; font-weight: 700; font-size: 18px;
+    }
+    /* ^ placeholder de logo: cámbialo por tu marca cuando quieras */
+    header h1 { font-size: 17px; margin: 0; font-weight: 650; }
+    header .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    #status { margin-left: auto; font-size: 12px; display: flex; align-items: center; gap: 6px; color: var(--muted); }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; }
+    .dot.ok { background: var(--green); }
+    .dot.bad { background: var(--red); }
+
+    nav.tabs {
+      display: flex; gap: 4px;
+      padding: 0 24px;
+      background: var(--card);
+      border-bottom: 1px solid var(--line);
+    }
+    nav.tabs button {
+      background: none; border: none; cursor: pointer;
+      padding: 13px 16px; font-size: 14px; color: var(--muted);
+      border-bottom: 2px solid transparent; font-weight: 550;
+    }
+    nav.tabs button.active { color: var(--brand); border-bottom-color: var(--brand); }
+
+    main { padding: 24px; max-width: 1100px; margin: 0 auto; }
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+    .toolbar h2 { font-size: 20px; margin: 0 8px 0 0; }
+    .spacer { flex: 1; }
+
+    input, select {
+      font: inherit; padding: 9px 11px; border: 1px solid var(--line);
+      border-radius: 9px; background: #fff; color: var(--text); outline: none;
+    }
+    input:focus, select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+
+    button.btn {
+      font: inherit; font-weight: 600; cursor: pointer;
+      padding: 9px 14px; border-radius: 9px; border: 1px solid transparent;
+      background: var(--brand); color: #fff;
+    }
+    button.btn:hover { background: var(--brand-dark); }
+    button.btn.ghost { background: #fff; color: var(--text); border-color: var(--line); }
+    button.btn.ghost:hover { background: #f9fafb; }
+    button.mini { padding: 4px 9px; font-size: 13px; border-radius: 7px; }
+
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); }
+    th { font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); background: #fafbfc; }
+    tr:last-child td { border-bottom: none; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #eef2ff; color: var(--brand); }
+    .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; margin: 1px 2px 1px 0; }
+    .prod-notes { font-size: 12px; color: var(--muted); margin-top: 2px; font-style: italic; }
+    .role { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .role.ADMIN { background: #ede9fe; color: #6d28d9; }
+    .role.MANAGER { background: #dbeafe; color: #1d4ed8; }
+    .badge-on { color: var(--green); font-weight: 600; }
+    .badge-off { color: var(--muted); }
+    .stock-low { color: var(--red); font-weight: 700; }
+    .muted { color: var(--muted); }
+    .empty { padding: 40px; text-align: center; color: var(--muted); }
+
+    /* Cards de resumen */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 14px; margin-bottom: 20px; }
+    .stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+    .stat .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+    .stat .value { font-size: 26px; font-weight: 700; margin-top: 4px; }
+
+    /* Semana contable */
+    .week { margin-bottom: 16px; }
+    .week-head { display: flex; align-items: center; gap: 14px; padding: 16px; flex-wrap: wrap; }
+    .week-head .range { font-weight: 650; }
+    .week-money { display: flex; gap: 22px; margin-left: auto; flex-wrap: wrap; }
+    .week-money div span { display: block; }
+    .week-money .k { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+    .week-money .v { font-size: 16px; font-weight: 650; }
+    .alloc-bar { height: 8px; background: var(--line); border-radius: 6px; overflow: hidden; display: flex; }
+    .alloc-bar i { display: block; height: 100%; }
+
+    /* Modal */
+    .modal-bg { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: none; place-items: center; z-index: 50; padding: 20px; }
+    .modal-bg.show { display: grid; }
+    .modal { background: #fff; border-radius: 14px; width: 100%; max-width: 460px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+    .modal h3 { margin: 0; padding: 18px 20px; border-bottom: 1px solid var(--line); font-size: 17px; }
+    .modal .body { padding: 20px; display: grid; gap: 13px; }
+    .modal .body label { font-size: 13px; font-weight: 600; display: grid; gap: 5px; }
+    .modal .body label span.opt { font-weight: 400; color: var(--muted); }
+    .modal .foot { padding: 14px 20px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 10px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #111827; color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 60; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+    .toast.err { background: var(--red); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">N</div>
+    <div>
+      <h1>Mi Negocio</h1>
+      <div class="sub">Inventario y contabilidad · plantilla</div>
+    </div>
+    <div id="status"><span class="dot" id="statusDot"></span><span id="statusText">conectando…</span></div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="inventario" class="active">Inventario</button>
+    <button data-tab="contabilidad">Contabilidad</button>
+    <button data-tab="facturas">Facturas</button>
+    <button data-tab="usuarios">Usuarios</button>
+  </nav>
+
+  <main>
+    <!-- INVENTARIO -->
+    <section class="view active" id="view-inventario">
+      <div class="stats" id="invStats"></div>
+      <div class="toolbar">
+        <h2>Productos</h2>
+        <input id="search" placeholder="Buscar producto…" style="min-width:240px" />
+        <div class="spacer"></div>
+        <button class="btn ghost" id="btnNewCat">+ Categoría</button>
+        <button class="btn" id="btnNewProd">+ Producto</button>
+      </div>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th><th>Presentación</th><th>Categoría</th>
+              <th class="num">Costo</th><th class="num">Precio</th>
+              <th class="num">Margen</th><th class="num">Stock</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="prodBody"><tr><td colspan="8" class="empty">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CONTABILIDAD -->
+    <section class="view" id="view-contabilidad">
+      <div class="toolbar">
+        <h2>Semanas</h2>
+        <div class="spacer"></div>
+        <button class="btn" id="btnNewWeek">+ Semana</button>
+      </div>
+      <div id="weeksWrap"><div class="empty">Cargando…</div></div>
+    </section>
+
+    <!-- USUARIOS -->
+    <section class="view" id="view-usuarios">
+      <div class="toolbar">
+        <h2>Usuarios y roles</h2>
+        <input id="searchUser" placeholder="Buscar por nombre o correo…" style="min-width:240px" />
+        <div class="spacer"></div>
+        <button class="btn" id="btnNewUser">+ Usuario</button>
+      </div>
+      <p class="muted" style="margin:-6px 0 16px;font-size:13px">
+        El <strong>Admin</strong> (tú) gestiona todo. El <strong>Encargado</strong> administra el día a día del negocio.
+        El inicio de sesión se conectará más adelante.
+      </p>
+      <div class="card">
+        <table>
+          <thead>
+            <tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody id="userBody"><tr><td colspan="5" class="empty">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FACTURAS -->
+    <section class="view" id="view-facturas">
+      <div class="toolbar">
+        <h2>Facturas</h2>
+        <input id="invFrom" type="date" title="Desde" />
+        <input id="invTo" type="date" title="Hasta" />
+        <input id="searchInv" placeholder="Proveedor…" style="min-width:160px" />
+        <div class="spacer"></div>
+        <button class="btn" id="btnNewInvoice">+ Factura</button>
+      </div>
+      <p class="muted" style="margin:-6px 0 16px;font-size:13px">
+        Archivo de facturas ordenadas por fecha. El <strong>preview</strong> y la captura por
+        <strong>correo</strong> los conectará después la otra persona (aquí está la base).
+      </p>
+      <div class="card">
+        <table>
+          <thead>
+            <tr><th>Fecha</th><th>Proveedor</th><th>Folio</th><th class="num">Monto</th><th>Preview</th><th>Origen</th><th></th></tr>
+          </thead>
+          <tbody id="invBody"><tr><td colspan="7" class="empty">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modales -->
+  <div class="modal-bg" id="modalBg">
+    <div class="modal">
+      <h3 id="modalTitle">Título</h3>
+      <div class="body" id="modalBody"></div>
+      <div class="foot">
+        <button class="btn ghost" id="modalCancel">Cancelar</button>
+        <button class="btn" id="modalSave">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ======= CONFIG =======
+    // Si abres este archivo en la misma PC donde corre el backend, déjalo así.
+    // Si lo abres desde OTRO dispositivo, cambia "localhost" por la IP de la PC del backend.
+    const API = "http://192.168.100.247:4000/api";
+
+    // ======= Utilidades =======
+    const $ = (s, el = document) => el.querySelector(s);
+    const money = (n) => "$" + Number(n || 0).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+    function toast(msg, isErr = false) {
+      const t = $("#toast");
+      t.textContent = msg;
+      t.className = "toast show" + (isErr ? " err" : "");
+      setTimeout(() => t.className = "toast", 2600);
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch(API + path, {
+        headers: { "Content-Type": "application/json" },
+        ...opts,
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
+      if (!res.ok) {
+        const msg = data?.error?.message || ("Error " + res.status);
+        throw new Error(msg);
+      }
+      return data;
+    }
+
+    // ======= Estado de conexión =======
+    async function checkHealth() {
+      try {
+        const h = await api("/health");
+        const ok = h.database === "ok";
+        $("#statusDot").className = "dot " + (ok ? "ok" : "bad");
+        $("#statusText").textContent = ok ? "conectado" : "DB sin conexión";
+      } catch (e) {
+        $("#statusDot").className = "dot bad";
+        $("#statusText").textContent = "backend apagado";
+      }
+    }
+
+    // ======= Tabs =======
+    document.querySelectorAll("nav.tabs button").forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll("nav.tabs button").forEach(x => x.classList.remove("active"));
+        document.querySelectorAll(".view").forEach(x => x.classList.remove("active"));
+        b.classList.add("active");
+        $("#view-" + b.dataset.tab).classList.add("active");
+      };
+    });
+
+    // ======= INVENTARIO =======
+    let categories = [];
+    let productsMap = {};
+
+    async function loadCategories() {
+      const r = await api("/categories");
+      categories = r.data || [];
+    }
+
+    // Presentaciones sugeridas (el frontend real las afina; aquí solo de ejemplo).
+    const PRESENTATIONS = ["Botella", "Lata", "Caguama", "Caballito (shot)", "Trago", "Copa", "Jarra 1L", "Vaso", "Tarro", "Orden"];
+
+    async function loadProducts() {
+      const q = $("#search").value.trim();
+      const r = await api("/products?pageSize=100" + (q ? "&search=" + encodeURIComponent(q) : ""));
+      const items = r.data || [];
+      productsMap = {};
+      items.forEach(p => productsMap[p.id] = p);
+      renderInvStats(items);
+      const body = $("#prodBody");
+      if (!items.length) {
+        body.innerHTML = '<tr><td colspan="8" class="empty">Sin productos. Crea el primero con “+ Producto”.</td></tr>';
+        return;
+      }
+      body.innerHTML = items.map(p => `
+        <tr>
+          <td>
+            <strong>${esc(p.name)}</strong>
+            ${(p.tags && p.tags.length) ? '<div>' + p.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('') + '</div>' : ''}
+            ${p.notes ? `<div class="prod-notes">${esc(p.notes)}</div>` : ''}
+          </td>
+          <td class="muted">${esc(p.presentation || "—")}</td>
+          <td>${p.category ? '<span class="pill">' + esc(p.category.name) + '</span>' : '<span class="muted">—</span>'}</td>
+          <td class="num">${money(p.cost)}</td>
+          <td class="num">${money(p.price)}</td>
+          <td class="num">${money(p.margin)}</td>
+          <td class="num"><strong>${p.stock}</strong></td>
+          <td class="num" style="white-space:nowrap;display:flex;gap:4px;align-items:center;justify-content:flex-end">
+            <button class="btn ghost mini" onclick="adjustStock('${p.id}','${esc(p.name)}',1)">+</button>
+            <button class="btn ghost mini" onclick="adjustStock('${p.id}','${esc(p.name)}',-1)">−</button>
+            <button class="btn ghost mini" onclick="editTags('${p.id}')">🏷</button>
+            <button class="btn ghost mini" onclick="editProduct('${p.id}')">✏️</button>
+          </td>
+        </tr>`).join("");
+    }
+
+    function renderInvStats(items) {
+      const total = items.length;
+      const unidades = items.reduce((s, p) => s + (p.stock || 0), 0);
+      const valor = items.reduce((s, p) => s + Number(p.cost || 0) * p.stock, 0);
+      $("#invStats").innerHTML = `
+        <div class="stat"><div class="label">Productos</div><div class="value">${total}</div></div>
+        <div class="stat"><div class="label">Unidades en stock</div><div class="value">${unidades}</div></div>
+        <div class="stat"><div class="label">Valor inventario (costo)</div><div class="value">${money(valor)}</div></div>`;
+    }
+
+    window.adjustStock = async (id, name, delta) => {
+      try {
+        await api(`/products/${id}/adjust-stock`, { method: "POST", body: JSON.stringify({ delta, reason: "ajuste manual" }) });
+        toast(`${name}: ${delta > 0 ? "+1" : "−1"} stock`);
+        loadProducts();
+      } catch (e) { toast(e.message, true); }
+    };
+
+    window.editProduct = (id) => {
+      const p = productsMap[id];
+      const catOpts = '<option value="">Sin categoría</option>' +
+        categories.map(c => `<option value="${c.id}"${p.categoryId === c.id ? ' selected' : ''}>${esc(c.name)}</option>`).join("");
+      const presOpts = PRESENTATIONS.map(x => `<option value="${esc(x)}">`).join("");
+      openModal("Editar producto", `
+        <div class="row2">
+          <label>Nombre <input id="e_name" value="${esc(p.name)}" /></label>
+          <label>Presentación <input id="e_pres" list="presListE" value="${esc(p.presentation || '')}" />
+            <datalist id="presListE">${presOpts}</datalist></label>
+        </div>
+        <label>Categoría <select id="e_cat">${catOpts}</select></label>
+        <div class="row2">
+          <label>Costo <input id="e_cost" type="number" step="0.01" value="${p.cost}" /></label>
+          <label>Precio <input id="e_price" type="number" step="0.01" value="${p.price}" /></label>
+        </div>
+        <label>Stock <input id="e_stock" type="number" value="${p.stock}" /></label>
+        <label>Tags <span class="opt">(separados por coma)</span><input id="e_tags" value="${esc((p.tags || []).join(', '))}" /></label>
+        <label>Notas <span class="opt">(opcional)</span><input id="e_notes" value="${esc(p.notes || '')}" /></label>
+      `, async () => {
+        const name = $("#e_name").value.trim();
+        if (!name) throw new Error("El nombre es obligatorio");
+        const rawTags = $("#e_tags").value.trim();
+        const tags = rawTags ? rawTags.split(",").map(t => t.trim()).filter(Boolean) : [];
+        await api(`/products/${p.id}`, { method: "PATCH", body: JSON.stringify({
+          name,
+          presentation: $("#e_pres").value.trim() || null,
+          categoryId: $("#e_cat").value || null,
+          cost: Number($("#e_cost").value || 0),
+          price: Number($("#e_price").value || 0),
+          stock: Number($("#e_stock").value || 0),
+          tags,
+          notes: $("#e_notes").value.trim() || null,
+        }) });
+        toast("Producto actualizado");
+        loadProducts();
+      });
+    };
+
+    window.editTags = (id) => {
+      const p = productsMap[id];
+      openModal(`Tags y notas — ${p.name}`, `
+        <label>Tags <span class="opt">(separados por coma)</span><input id="t_tags" value="${esc((p.tags || []).join(', '))}" placeholder="Ej. Promoción, Temporada" /></label>
+        <label>Notas <span class="opt">(opcional)</span><input id="t_notes" value="${esc(p.notes || '')}" placeholder="Ej. Revisar caducidad" /></label>
+      `, async () => {
+        const rawTags = $("#t_tags").value.trim();
+        const tags = rawTags ? rawTags.split(",").map(t => t.trim()).filter(Boolean) : [];
+        await api(`/products/${p.id}`, { method: "PATCH", body: JSON.stringify({
+          tags,
+          notes: $("#t_notes").value.trim() || null,
+        }) });
+        toast("Tags y notas actualizados");
+        loadProducts();
+      });
+    };
+
+    let searchTimer;
+    $("#search").oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(loadProducts, 300); };
+
+    // ======= CONTABILIDAD =======
+    const ALLOC_COLORS = { SALARIES: "#2563eb", RESTOCK: "#d97706", SAVINGS: "#059669", OTHER: "#7c3aed" };
+    const ALLOC_LABELS = { SALARIES: "Salarios", RESTOCK: "Recompra", SAVINGS: "Ahorro/Mejoras", OTHER: "Otro" };
+
+    async function loadWeeks() {
+      const r = await api("/accounting/weeks");
+      const weeks = r.data || [];
+      const wrap = $("#weeksWrap");
+      if (!weeks.length) {
+        wrap.innerHTML = '<div class="empty">Sin semanas registradas. Crea una con “+ Semana”.</div>';
+        return;
+      }
+      wrap.innerHTML = weeks.map(w => {
+        const allocated = (w.allocations || []).reduce((s, a) => s + Number(a.amount || 0), 0);
+        const remaining = Number(w.profit || 0) - allocated;
+        const bar = (w.allocations || []).map(a => {
+          const pct = w.profit > 0 ? (Number(a.amount) / Number(w.profit) * 100) : 0;
+          return `<i style="width:${pct}%;background:${ALLOC_COLORS[a.type] || '#888'}" title="${ALLOC_LABELS[a.type] || a.type}: ${money(a.amount)}"></i>`;
+        }).join("");
+        const allocRows = (w.allocations || []).map(a => `
+          <tr>
+            <td><span class="pill" style="background:${ALLOC_COLORS[a.type]}22;color:${ALLOC_COLORS[a.type]}">${ALLOC_LABELS[a.type] || a.type}</span> ${esc(a.label || "")}</td>
+            <td class="num">${money(a.amount)}</td>
+          </tr>`).join("");
+        return `
+        <div class="card week">
+          <div class="week-head">
+            <div>
+              <div class="range">${w.weekStart} → ${w.weekEnd}</div>
+              ${w.notes ? '<div class="muted" style="font-size:13px">' + esc(w.notes) + '</div>' : ''}
+            </div>
+            <div class="week-money">
+              <div><span class="k">Ingresos</span><span class="v">${money(w.revenue)}</span></div>
+              <div><span class="k">Costos</span><span class="v">${money(w.cost)}</span></div>
+              <div><span class="k">Ganancia</span><span class="v" style="color:var(--green)">${money(w.profit)}</span></div>
+              <div><span class="k">Sin repartir</span><span class="v" style="color:${remaining < 0 ? 'var(--red)' : 'var(--text)'}">${money(remaining)}</span></div>
+            </div>
+          </div>
+          <div style="padding:0 16px 12px"><div class="alloc-bar">${bar || ''}</div></div>
+          <table>
+            <tbody>
+              ${allocRows || '<tr><td colspan="2" class="muted" style="padding:14px 16px">Sin repartos todavía.</td></tr>'}
+              <tr><td style="padding:12px 16px"><button class="btn ghost mini" onclick="newAlloc('${w.id}')">+ Agregar reparto</button></td><td></td></tr>
+            </tbody>
+          </table>
+        </div>`;
+      }).join("");
+    }
+
+    // ======= USUARIOS =======
+    const ROLE_LABELS = { ADMIN: "Admin", MANAGER: "Encargado" };
+
+    async function loadUsers() {
+      const q = $("#searchUser").value.trim();
+      const r = await api("/users" + (q ? "?search=" + encodeURIComponent(q) : ""));
+      const items = r.data || [];
+      const body = $("#userBody");
+      if (!items.length) {
+        body.innerHTML = '<tr><td colspan="5" class="empty">Sin usuarios.</td></tr>';
+        return;
+      }
+      body.innerHTML = items.map(u => `
+        <tr>
+          <td><strong>${esc(u.name)}</strong></td>
+          <td class="muted">${esc(u.email)}</td>
+          <td><span class="role ${u.role}">${ROLE_LABELS[u.role] || u.role}</span></td>
+          <td>${u.active ? '<span class="badge-on">Activo</span>' : '<span class="badge-off">Inactivo</span>'}</td>
+          <td class="num"><button class="btn ghost mini" onclick="delUser('${u.id}','${esc(u.name)}')">Eliminar</button></td>
+        </tr>`).join("");
+    }
+
+    window.delUser = async (id, name) => {
+      if (!confirm(`¿Eliminar a "${name}"?`)) return;
+      try { await api("/users/" + id, { method: "DELETE" }); toast("Usuario eliminado"); loadUsers(); }
+      catch (e) { toast(e.message, true); }
+    };
+
+    let userSearchTimer;
+    $("#searchUser").oninput = () => { clearTimeout(userSearchTimer); userSearchTimer = setTimeout(loadUsers, 300); };
+
+    // ======= FACTURAS =======
+    const INV_SOURCE = { UPLOAD: "Manual", EMAIL: "Correo", API: "API" };
+
+    async function loadInvoices() {
+      const params = new URLSearchParams();
+      if ($("#invFrom").value) params.set("from", $("#invFrom").value);
+      if ($("#invTo").value) params.set("to", $("#invTo").value);
+      if ($("#searchInv").value.trim()) params.set("vendor", $("#searchInv").value.trim());
+      params.set("pageSize", "100");
+      const r = await api("/invoices?" + params.toString());
+      const items = r.data || [];
+      const body = $("#invBody");
+      if (!items.length) {
+        body.innerHTML = '<tr><td colspan="7" class="empty">Sin facturas en este rango.</td></tr>';
+        return;
+      }
+      body.innerHTML = items.map(i => `
+        <tr>
+          <td>${i.invoiceDate}</td>
+          <td><strong>${esc(i.vendor)}</strong></td>
+          <td class="muted">${esc(i.number || "—")}</td>
+          <td class="num">${money(i.amount)}</td>
+          <td>${i.previewUrl
+              ? '<a href="' + esc(i.fileUrl || i.previewUrl) + '" target="_blank">ver</a>'
+              : '<span class="muted" title="Se conecta con S3 después">📄 —</span>'}</td>
+          <td><span class="pill">${INV_SOURCE[i.source] || i.source}</span></td>
+          <td class="num"><button class="btn ghost mini" onclick="delInvoice('${i.id}')">Eliminar</button></td>
+        </tr>`).join("");
+    }
+
+    window.delInvoice = async (id) => {
+      if (!confirm("¿Eliminar esta factura?")) return;
+      try { await api("/invoices/" + id, { method: "DELETE" }); toast("Factura eliminada"); loadInvoices(); }
+      catch (e) { toast(e.message, true); }
+    };
+
+    let invSearchTimer;
+    const reloadInvoices = () => { clearTimeout(invSearchTimer); invSearchTimer = setTimeout(loadInvoices, 300); };
+    $("#searchInv").oninput = reloadInvoices;
+    $("#invFrom").onchange = loadInvoices;
+    $("#invTo").onchange = loadInvoices;
+
+    $("#btnNewInvoice").onclick = () => {
+      const today = new Date().toISOString().slice(0, 10);
+      openModal("Registrar factura", `
+        <div class="row2">
+          <label>Fecha <input id="iv_date" type="date" value="${today}" /></label>
+          <label>Monto <input id="iv_amount" type="number" step="0.01" value="0" /></label>
+        </div>
+        <label>Proveedor <input id="iv_vendor" placeholder="Ej. Distribuidora del Norte" /></label>
+        <label>Folio <span class="opt">(opcional)</span><input id="iv_number" placeholder="A-12345" /></label>
+        <label>Nota <span class="opt">(opcional)</span><input id="iv_notes" placeholder="Comentario" /></label>
+        <p class="muted" style="font-size:12px;margin:0">El archivo (PDF/foto) y su preview se conectarán después con el almacenamiento (S3).</p>
+      `, async () => {
+        const vendor = $("#iv_vendor").value.trim();
+        if (!vendor) throw new Error("El proveedor es obligatorio");
+        await api("/invoices", { method: "POST", body: JSON.stringify({
+          invoiceDate: $("#iv_date").value,
+          vendor,
+          amount: Number($("#iv_amount").value || 0),
+          number: $("#iv_number").value.trim() || null,
+          notes: $("#iv_notes").value.trim() || null,
+        }) });
+        toast("Factura registrada");
+        loadInvoices();
+      });
+    };
+
+    $("#btnNewUser").onclick = () => {
+      openModal("Nuevo usuario", `
+        <label>Nombre <input id="u_name" placeholder="Ej. María López" /></label>
+        <label>Correo <input id="u_email" type="email" placeholder="persona@negocio.com" /></label>
+        <div class="row2">
+          <label>Contraseña <input id="u_pass" type="password" placeholder="mín. 6 caracteres" /></label>
+          <label>Rol <select id="u_role"><option value="MANAGER">Encargado</option><option value="ADMIN">Admin</option></select></label>
+        </div>
+      `, async () => {
+        const name = $("#u_name").value.trim();
+        const email = $("#u_email").value.trim();
+        const password = $("#u_pass").value;
+        if (!name || !email) throw new Error("Nombre y correo son obligatorios");
+        if (password.length < 6) throw new Error("La contraseña debe tener al menos 6 caracteres");
+        await api("/users", { method: "POST", body: JSON.stringify({ name, email, password, role: $("#u_role").value }) });
+        toast("Usuario creado");
+        loadUsers();
+      });
+    };
+
+    // ======= MODAL genérico =======
+    let modalSaveHandler = null;
+    function openModal(title, html, onSave) {
+      $("#modalTitle").textContent = title;
+      $("#modalBody").innerHTML = html;
+      modalSaveHandler = onSave;
+      $("#modalBg").classList.add("show");
+      const first = $("#modalBody input, #modalBody select");
+      if (first) first.focus();
+    }
+    function closeModal() { $("#modalBg").classList.remove("show"); modalSaveHandler = null; }
+    $("#modalCancel").onclick = closeModal;
+    $("#modalBg").onclick = (e) => { if (e.target === $("#modalBg")) closeModal(); };
+    $("#modalSave").onclick = async () => {
+      if (!modalSaveHandler) return;
+      try { await modalSaveHandler(); closeModal(); }
+      catch (e) { toast(e.message, true); }
+    };
+
+    // ---- Nuevo producto ----
+    $("#btnNewProd").onclick = () => {
+      const catOpts = '<option value="">Sin categoría</option>' +
+        categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+      const presOpts = PRESENTATIONS.map(x => `<option value="${esc(x)}">`).join("");
+      openModal("Nuevo producto", `
+        <div class="row2">
+          <label>Nombre <input id="f_name" placeholder="Ej. Corona" /></label>
+          <label>Presentación <input id="f_pres" list="presList" placeholder="Elige o escribe…" />
+            <datalist id="presList">${presOpts}</datalist></label>
+        </div>
+        <label>Categoría<select id="f_cat">${catOpts}</select></label>
+        <div class="row2">
+          <label>Costo <input id="f_cost" type="number" step="0.01" value="0" /></label>
+          <label>Precio <input id="f_price" type="number" step="0.01" value="0" /></label>
+        </div>
+        <label>Stock inicial <input id="f_stock" type="number" value="0" /></label>
+        <label>Tags <span class="opt">(opcional, separados por coma)</span><input id="f_tags" placeholder="Ej. Promoción, Temporada" /></label>
+        <label>Notas <span class="opt">(opcional)</span><input id="f_notes" placeholder="Ej. Revisar caducidad, favorito de la casa" /></label>
+      `, async () => {
+        const name = $("#f_name").value.trim();
+        if (!name) throw new Error("El nombre es obligatorio");
+        const rawTags = $("#f_tags").value.trim();
+        const tags = rawTags ? rawTags.split(",").map(t => t.trim()).filter(Boolean) : [];
+        await api("/products", { method: "POST", body: JSON.stringify({
+          name,
+          presentation: $("#f_pres").value.trim() || null,
+          categoryId: $("#f_cat").value || null,
+          cost: Number($("#f_cost").value || 0),
+          price: Number($("#f_price").value || 0),
+          stock: Number($("#f_stock").value || 0),
+          tags,
+          notes: $("#f_notes").value.trim() || null,
+        }) });
+        toast("Producto creado");
+        loadProducts();
+      });
+    };
+
+    // ---- Nueva categoría ----
+    $("#btnNewCat").onclick = () => {
+      openModal("Nueva categoría", `
+        <label>Nombre <input id="f_catname" placeholder="Ej. Bebidas" /></label>
+      `, async () => {
+        const name = $("#f_catname").value.trim();
+        if (!name) throw new Error("El nombre es obligatorio");
+        await api("/categories", { method: "POST", body: JSON.stringify({ name }) });
+        toast("Categoría creada");
+        await loadCategories();
+        loadProducts();
+      });
+    };
+
+    // ---- Nueva semana ----
+    $("#btnNewWeek").onclick = () => {
+      const today = new Date();
+      const monday = new Date(today); monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+      const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+      const fmt = (d) => d.toISOString().slice(0, 10);
+      openModal("Nueva semana contable", `
+        <div class="row2">
+          <label>Desde <input id="f_start" type="date" value="${fmt(monday)}" /></label>
+          <label>Hasta <input id="f_end" type="date" value="${fmt(sunday)}" /></label>
+        </div>
+        <div class="row2">
+          <label>Ingresos <input id="f_rev" type="number" step="0.01" value="0" /></label>
+          <label>Costos <input id="f_cost" type="number" step="0.01" value="0" /></label>
+        </div>
+        <label>Nota <span class="opt">(opcional)</span><input id="f_notes" placeholder="Comentario de la semana" /></label>
+      `, async () => {
+        await api("/accounting/weeks", { method: "POST", body: JSON.stringify({
+          weekStart: $("#f_start").value,
+          weekEnd: $("#f_end").value,
+          revenue: Number($("#f_rev").value || 0),
+          cost: Number($("#f_cost").value || 0),
+          notes: $("#f_notes").value.trim() || null,
+        }) });
+        toast("Semana creada");
+        loadWeeks();
+      });
+    };
+
+    // ---- Nuevo reparto ----
+    window.newAlloc = (weekId) => {
+      const opts = Object.entries(ALLOC_LABELS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
+      openModal("Agregar reparto", `
+        <label>Tipo <select id="f_type">${opts}</select></label>
+        <label>Etiqueta <span class="opt">(opcional)</span><input id="f_label" placeholder="Ej. Sueldos de la semana" /></label>
+        <label>Monto <input id="f_amount" type="number" step="0.01" value="0" /></label>
+      `, async () => {
+        const amount = Number($("#f_amount").value || 0);
+        if (amount <= 0) throw new Error("El monto debe ser mayor a 0");
+        await api(`/accounting/weeks/${weekId}/allocations`, { method: "POST", body: JSON.stringify({
+          type: $("#f_type").value,
+          label: $("#f_label").value.trim() || null,
+          amount,
+        }) });
+        toast("Reparto agregado");
+        loadWeeks();
+      });
+    };
+
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
+    // ======= Inicio =======
+    async function init() {
+      await checkHealth();
+      try {
+        await loadCategories();
+        await loadProducts();
+        await loadWeeks();
+        await loadUsers();
+        await loadInvoices();
+      } catch (e) {
+        toast("No se pudo cargar: " + e.message, true);
+      }
+    }
+    init();
+    setInterval(checkHealth, 15000);
+  </script>
+</body>
+</html>

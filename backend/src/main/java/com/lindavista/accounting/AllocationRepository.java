@@ -1,0 +1,6 @@
+package com.lindavista.accounting;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AllocationRepository extends JpaRepository<Allocation, String> {
+}

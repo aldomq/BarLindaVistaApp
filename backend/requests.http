@@ -1,0 +1,107 @@
+### Peticiones de prueba para la API (Java / Spring Boot)
+### Usa la extension "REST Client" de VS Code, o copia los curl.
+
+@base = http://localhost:4000/api
+
+### Salud
+GET {{base}}/health
+
+### --- Usuarios y roles ---
+### (Por ahora SIN login; proteger para ADMIN cuando se agregue autenticacion)
+GET {{base}}/users
+
+### Crear usuario (roles: ADMIN | MANAGER)
+POST {{base}}/users
+Content-Type: application/json
+
+{
+  "name": "Maria Lopez",
+  "email": "maria@negocio.com",
+  "password": "clave123",
+  "role": "MANAGER"
+}
+
+### Cambiar rol / desactivar usuario
+# PATCH {{base}}/users/<ID>
+# Content-Type: application/json
+#
+# { "role": "ADMIN", "active": false }
+
+### --- Categorias ---
+GET {{base}}/categories
+
+### Crear categoria
+POST {{base}}/categories
+Content-Type: application/json
+
+{ "name": "Bebidas" }
+
+### --- Productos ---
+### Cada producto lleva su propia presentacion (texto), precio y stock.
+GET {{base}}/products?page=1&pageSize=20
+
+### Crear producto
+POST {{base}}/products
+Content-Type: application/json
+
+{
+  "name": "Corona",
+  "presentation": "Botella 355ml",
+  "cost": 18,
+  "price": 35,
+  "stock": 120
+}
+
+### Ajustar stock (resta 3)
+# POST {{base}}/products/<PRODUCT_ID>/adjust-stock
+# Content-Type: application/json
+#
+# { "delta": -3, "reason": "merma" }
+
+### --- Ventas (futuro POS) ---
+### Se vende un producto y descuenta su stock.
+# POST {{base}}/sales
+# Content-Type: application/json
+#
+# { "paymentMethod": "cash", "items": [ { "productId": "<PRODUCT_ID>", "quantity": 2 } ] }
+
+### --- Facturas ---
+GET {{base}}/invoices?from=2026-06-01&to=2026-06-30
+
+### Registrar una factura (subida manual)
+POST {{base}}/invoices
+Content-Type: application/json
+
+{
+  "invoiceDate": "2026-06-18",
+  "vendor": "Distribuidora del Norte",
+  "amount": 4500.00,
+  "number": "A-12345",
+  "notes": "Recompra de inventario"
+}
+
+### Buzon de correo (BASE: la otra persona conecta Mailgun/SES y el guardado en S3)
+# POST {{base}}/invoices/email-inbound
+
+### --- Contabilidad ---
+GET {{base}}/accounting/weeks
+
+### Crear semana
+POST {{base}}/accounting/weeks
+Content-Type: application/json
+
+{
+  "weekStart": "2026-06-08",
+  "weekEnd": "2026-06-14",
+  "revenue": 8000,
+  "cost": 4500
+}
+
+### Resumen del reparto de una semana
+# GET {{base}}/accounting/weeks/<ID>/summary
+
+### Agregar reparto
+# POST {{base}}/accounting/weeks/<ID>/allocations
+# Content-Type: application/json
+#
+# { "type": "SALARIES", "label": "Sueldos", "amount": 1500 }
