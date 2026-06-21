@@ -10,7 +10,7 @@ y para **crecer** (próximo paso: POS para cobrar en tablet).
 
 ```
         ┌─────────────┐        ┌─────────────┐
-        │   Web app    │       │   App móvil  │   (la desarrolla otra persona)
+        │   Web app    │       │   App móvil  │  
         └──────┬──────┘        └──────┬──────┘
                │   HTTP / JSON        │
                └──────────┬───────────┘
