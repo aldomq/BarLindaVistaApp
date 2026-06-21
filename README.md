@@ -1,5 +1,5 @@
 # LindaVista
-
+https://aldomq.github.io/BarLindaVistaApp/
 Plantilla de aplicación para un negocio: **inventario** + **contabilidad semanal**,
 pensada desde el inicio para ser **multi-dispositivo** (web, móvil y tablet comparten datos)
 y para **crecer** (próximo paso: POS para cobrar en tablet).
