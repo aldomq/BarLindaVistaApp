@@ -13,7 +13,7 @@
       --line: #e8e0d4;
       --brand: #c8860d;
       --brand-dark: #a66e08;
-      --header-bg: #1a120b;
+      --header-bg: #000000;
       --green: #1f8a4c;
       --red: #c0392b;
       --amber: #d97706;
@@ -39,10 +39,10 @@
       top: 0;
       z-index: 10;
     }
-    header .logo { height: 48px; width: auto; border-radius: 8px; display: block; }
+    header .logo { height: 48px; width: auto; border-radius: 8px; display: block; cursor: pointer; }
     header h1 { font-size: 18px; margin: 0; font-weight: 700; color: #f5ecdf; letter-spacing: .02em; }
     header .sub { font-size: 12px; color: var(--brand); margin-top: 2px; font-weight: 600; }
-    #status { margin-left: auto; font-size: 12px; display: flex; align-items: center; gap: 6px; color: #cbb89c; }
+    #status { font-size: 12px; display: flex; align-items: center; gap: 6px; color: #cbb89c; }
     .dot { width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; }
     .dot.ok { background: var(--green); }
     .dot.bad { background: var(--red); }
@@ -135,6 +135,26 @@
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
     .toast.err { background: var(--red); }
 
+    /* Login */
+    .hidden { display: none !important; }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+    #whoami { font-size: 13px; color: #e8d9c2; font-weight: 600; }
+    #logoutBtn { background: none; border: 1px solid rgba(255,255,255,.25); color: #e8d9c2; padding: 6px 12px; border-radius: 8px; font: inherit; font-size: 13px; cursor: pointer; }
+    #logoutBtn:hover { background: rgba(255,255,255,.08); }
+    .login-overlay { position: fixed; inset: 0; background: var(--header-bg); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
+    body.logged-in #loginOverlay { display: none; }
+    body:not(.logged-in) > header,
+    body:not(.logged-in) > nav.tabs,
+    body:not(.logged-in) > main { display: none; }
+    .login-card { background: var(--card); border-radius: 16px; padding: 28px 26px; width: 100%; max-width: 360px; box-shadow: 0 20px 50px rgba(0,0,0,.45); }
+    .login-card img { height: 88px; display: block; margin: 0 auto 14px; }
+    .login-card h2 { text-align: center; margin: 0 0 2px; font-size: 19px; }
+    .login-card .sub { text-align: center; color: var(--muted); margin: 0 0 20px; font-size: 13px; }
+    .login-card label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .login-card input { width: 100%; margin-bottom: 14px; }
+    .login-card button { width: 100%; }
+    .login-err { color: var(--red); font-size: 13px; margin: 0 0 12px; }
+
     /* Movil: que nada se salga de la pantalla */
     @media (max-width: 600px) {
       header { padding: 10px 14px; gap: 10px; }
@@ -151,13 +171,32 @@
   </style>
 </head>
 <body>
+  <!-- Pantalla de login (se oculta al iniciar sesion) -->
+  <div class="login-overlay" id="loginOverlay">
+    <form class="login-card" id="loginForm">
+      <img src="logo.png" alt="Bar Linda Vista" onerror="this.style.display='none'" />
+      <h2>Bar Linda Vista</h2>
+      <div class="sub">Inicia sesión para continuar</div>
+      <div class="login-err hidden" id="loginErr"></div>
+      <label for="loginEmail">Correo</label>
+      <input id="loginEmail" type="email" autocomplete="username" placeholder="correo@ejemplo.com" />
+      <label for="loginPass">Contraseña</label>
+      <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" />
+      <button class="btn" type="submit">Entrar</button>
+    </form>
+  </div>
+
   <header>
-    <img class="logo" src="logo.png" alt="Bar Linda Vista" onerror="this.style.display='none'" />
+    <img class="logo" src="logo.png" alt="Bar Linda Vista" title="Volver al inicio" onclick="location.reload()" onerror="this.style.display='none'" />
     <div>
       <h1>Bar Linda Vista</h1>
       <div class="sub">Barbacoas, Puriscal</div>
     </div>
-    <div id="status"><span class="dot" id="statusDot"></span><span id="statusText">conectando…</span></div>
+    <div class="header-right">
+      <div id="status"><span class="dot" id="statusDot"></span><span id="statusText">conectando…</span></div>
+      <span id="whoami"></span>
+      <button id="logoutBtn" type="button">Salir</button>
+    </div>
   </header>
 
   <nav class="tabs">
@@ -281,16 +320,26 @@
       setTimeout(() => t.className = "toast", 2600);
     }
 
+    // ======= Sesión / token =======
+    const TOKEN_KEY = "blv_token";
+    let authUser = null;
+    const getToken = () => localStorage.getItem(TOKEN_KEY);
+    const setToken = (t) => t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY);
+
     async function api(path, opts = {}) {
-      const res = await fetch(API + path, {
-        headers: { "Content-Type": "application/json" },
-        ...opts,
-      });
+      const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
+      const t = getToken();
+      if (t) headers["Authorization"] = "Bearer " + t;
+      const res = await fetch(API + path, { ...opts, headers });
       const text = await res.text();
       const data = text ? JSON.parse(text) : null;
+      // Token vencido/ausente en una ruta protegida → cerrar sesión.
+      if (res.status === 401 && getToken() && path !== "/auth/login") {
+        doLogout();
+        throw new Error(data?.error?.message || "Sesión expirada");
+      }
       if (!res.ok) {
-        const msg = data?.error?.message || ("Error " + res.status);
-        throw new Error(msg);
+        throw new Error(data?.error?.message || ("Error " + res.status));
       }
       return data;
     }
@@ -732,21 +781,80 @@
 
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
 
-    // ======= Inicio =======
-    async function init() {
-      await checkHealth();
+    // ======= Login / sesión =======
+    function applyRole() {
+      const isAdmin = authUser && authUser.role === "ADMIN";
+      // La pestaña Usuarios es solo del admin.
+      const usersTab = document.querySelector('nav.tabs button[data-tab="usuarios"]');
+      usersTab.classList.toggle("hidden", !isAdmin);
+      if (!isAdmin) {
+        // Si quedó activa Usuarios, volver a Inventario.
+        document.querySelector('nav.tabs button[data-tab="inventario"]').click();
+      }
+      $("#whoami").textContent = authUser ? authUser.name : "";
+    }
+
+    async function loadAppData() {
       try {
         await loadCategories();
         await loadProducts();
         await loadWeeks();
-        await loadUsers();
         await loadInvoices();
+        if (authUser && authUser.role === "ADMIN") await loadUsers();
       } catch (e) {
         toast("No se pudo cargar: " + e.message, true);
       }
     }
+
+    function onAuthenticated() {
+      document.body.classList.add("logged-in");
+      applyRole();
+      loadAppData();
+    }
+
+    function doLogout() {
+      setToken(null);
+      authUser = null;
+      document.body.classList.remove("logged-in");
+      $("#loginPass").value = "";
+    }
+
+    $("#loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errEl = $("#loginErr");
+      errEl.classList.add("hidden");
+      try {
+        const r = await api("/auth/login", { method: "POST", body: JSON.stringify({
+          email: $("#loginEmail").value.trim(),
+          password: $("#loginPass").value,
+        }) });
+        setToken(r.token);
+        authUser = r.user;
+        onAuthenticated();
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.classList.remove("hidden");
+      }
+    });
+
+    $("#logoutBtn").onclick = doLogout;
+
+    // ======= Inicio =======
+    async function init() {
+      checkHealth();
+      setInterval(checkHealth, 15000);
+      if (getToken()) {
+        try {
+          authUser = await api("/auth/me");
+          onAuthenticated();
+          return;
+        } catch (e) {
+          doLogout();
+        }
+      }
+      $("#loginEmail").focus();
+    }
     init();
-    setInterval(checkHealth, 15000);
   </script>
 </body>
 </html>
