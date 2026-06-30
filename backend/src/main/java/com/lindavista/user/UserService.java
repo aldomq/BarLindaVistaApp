@@ -23,7 +23,7 @@ public class UserService {
 
   private UserResponse map(AppUser u) {
     return new UserResponse(
-        u.getId(), u.getName(), u.getEmail(), u.getRole(),
+        u.getId(), u.getName(), u.getUsername(), u.getRole(),
         u.isActive(), u.getCreatedAt(), u.getUpdatedAt());
   }
 
@@ -31,7 +31,7 @@ public class UserService {
   public List<UserResponse> list(String search) {
     List<AppUser> rows = (search == null || search.isBlank())
         ? repo.findAllByOrderByNameAsc()
-        : repo.findByNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrderByNameAsc(
+        : repo.findByNameContainingIgnoreCaseOrUsernameContainingIgnoreCaseOrderByNameAsc(
             search.trim(), search.trim());
     return rows.stream().map(this::map).toList();
   }
@@ -47,13 +47,13 @@ public class UserService {
 
   @Transactional
   public UserResponse create(CreateUserRequest req) {
-    String email = req.email().trim().toLowerCase();
-    if (repo.existsByEmailIgnoreCase(email)) {
-      throw ApiException.conflict("Ya existe un usuario con ese correo");
+    String username = req.username().trim().toLowerCase();
+    if (repo.existsByUsernameIgnoreCase(username)) {
+      throw ApiException.conflict("Ya existe un usuario con ese nombre");
     }
     AppUser u = new AppUser();
     u.setName(req.name().trim());
-    u.setEmail(email);
+    u.setUsername(username);
     u.setPasswordHash(encoder.encode(req.password()));
     u.setRole(req.role());
     return map(repo.save(u));
@@ -63,12 +63,12 @@ public class UserService {
   public UserResponse update(String id, UpdateUserRequest req) {
     AppUser u = find(id);
     if (req.name() != null) u.setName(req.name().trim());
-    if (req.email() != null) {
-      String email = req.email().trim().toLowerCase();
-      if (!email.equalsIgnoreCase(u.getEmail()) && repo.existsByEmailIgnoreCase(email)) {
-        throw ApiException.conflict("Ya existe un usuario con ese correo");
+    if (req.username() != null) {
+      String username = req.username().trim().toLowerCase();
+      if (!username.equalsIgnoreCase(u.getUsername()) && repo.existsByUsernameIgnoreCase(username)) {
+        throw ApiException.conflict("Ya existe un usuario con ese nombre");
       }
-      u.setEmail(email);
+      u.setUsername(username);
     }
     if (req.password() != null && !req.password().isBlank()) {
       u.setPasswordHash(encoder.encode(req.password()));

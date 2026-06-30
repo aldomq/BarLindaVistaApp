@@ -33,13 +33,13 @@ public class AuthController {
 
   @PostMapping("/login")
   public LoginResponse login(@Valid @RequestBody LoginRequest req) {
-    AppUser u = users.findByEmailIgnoreCase(req.email().trim()).orElse(null);
+    AppUser u = users.findByUsernameIgnoreCase(req.username().trim()).orElse(null);
     // Mismo mensaje para usuario inexistente o password incorrecta (no filtrar info).
     if (u == null || !u.isActive() || !encoder.matches(req.password(), u.getPasswordHash())) {
-      throw new ApiException(HttpStatus.UNAUTHORIZED, "Correo o contraseña incorrectos");
+      throw new ApiException(HttpStatus.UNAUTHORIZED, "Usuario o contraseña incorrectos");
     }
     String token = tokens.issue(u.getId(), u.getRole().name());
-    return new LoginResponse(token, new AuthUser(u.getId(), u.getName(), u.getEmail(), u.getRole()));
+    return new LoginResponse(token, new AuthUser(u.getId(), u.getName(), u.getUsername(), u.getRole()));
   }
 
   /** Devuelve el usuario del token actual (para validar la sesion al cargar la app). */
@@ -50,6 +50,6 @@ public class AuthController {
     if (u == null) {
       throw new ApiException(HttpStatus.UNAUTHORIZED, "Sesión inválida");
     }
-    return new AuthUser(u.getId(), u.getName(), u.getEmail(), u.getRole());
+    return new AuthUser(u.getId(), u.getName(), u.getUsername(), u.getRole());
   }
 }

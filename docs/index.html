@@ -178,8 +178,8 @@
       <h2>Bar Linda Vista</h2>
       <div class="sub">Inicia sesión para continuar</div>
       <div class="login-err hidden" id="loginErr"></div>
-      <label for="loginEmail">Correo</label>
-      <input id="loginEmail" type="email" autocomplete="username" placeholder="correo@ejemplo.com" />
+      <label for="loginUser">Usuario</label>
+      <input id="loginUser" type="text" autocomplete="username" placeholder="usuario" />
       <label for="loginPass">Contraseña</label>
       <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" />
       <button class="btn" type="submit">Entrar</button>
@@ -256,7 +256,7 @@
       <div class="card">
         <table>
           <thead>
-            <tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th></th></tr>
+            <tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th><th></th></tr>
           </thead>
           <tbody id="userBody"><tr><td colspan="5" class="empty">Cargando…</td></tr></tbody>
         </table>
@@ -554,7 +554,7 @@
       body.innerHTML = items.map(u => `
         <tr>
           <td><strong>${esc(u.name)}</strong></td>
-          <td class="muted">${esc(u.email)}</td>
+          <td class="muted">${esc(u.username)}</td>
           <td><span class="role ${u.role}">${ROLE_LABELS[u.role] || u.role}</span></td>
           <td>${u.active ? '<span class="badge-on">Activo</span>' : '<span class="badge-off">Inactivo</span>'}</td>
           <td class="num"><button class="btn ghost mini" onclick="delUser('${u.id}','${esc(u.name)}')">Eliminar</button></td>
@@ -641,18 +641,18 @@
     $("#btnNewUser").onclick = () => {
       openModal("Nuevo usuario", `
         <label>Nombre <input id="u_name" placeholder="Ej. María López" /></label>
-        <label>Correo <input id="u_email" type="email" placeholder="persona@negocio.com" /></label>
+        <label>Usuario <span class="opt">(para iniciar sesión)</span><input id="u_user" placeholder="Ej. maria" /></label>
         <div class="row2">
           <label>Contraseña <input id="u_pass" type="password" placeholder="mín. 6 caracteres" /></label>
           <label>Rol <select id="u_role"><option value="MANAGER">Encargado</option><option value="ADMIN">Admin</option></select></label>
         </div>
       `, async () => {
         const name = $("#u_name").value.trim();
-        const email = $("#u_email").value.trim();
+        const username = $("#u_user").value.trim();
         const password = $("#u_pass").value;
-        if (!name || !email) throw new Error("Nombre y correo son obligatorios");
+        if (!name || !username) throw new Error("Nombre y usuario son obligatorios");
         if (password.length < 6) throw new Error("La contraseña debe tener al menos 6 caracteres");
-        await api("/users", { method: "POST", body: JSON.stringify({ name, email, password, role: $("#u_role").value }) });
+        await api("/users", { method: "POST", body: JSON.stringify({ name, username, password, role: $("#u_role").value }) });
         toast("Usuario creado");
         loadUsers();
       });
@@ -825,7 +825,7 @@
       errEl.classList.add("hidden");
       try {
         const r = await api("/auth/login", { method: "POST", body: JSON.stringify({
-          email: $("#loginEmail").value.trim(),
+          username: $("#loginUser").value.trim(),
           password: $("#loginPass").value,
         }) });
         setToken(r.token);
@@ -852,7 +852,7 @@
           doLogout();
         }
       }
-      $("#loginEmail").focus();
+      $("#loginUser").focus();
     }
     init();
   </script>

@@ -9,10 +9,10 @@ public interface UserRepository extends JpaRepository<AppUser, String> {
 
   List<AppUser> findAllByOrderByNameAsc();
 
-  List<AppUser> findByNameContainingIgnoreCaseOrEmailContainingIgnoreCaseOrderByNameAsc(
-      String name, String email);
+  List<AppUser> findByNameContainingIgnoreCaseOrUsernameContainingIgnoreCaseOrderByNameAsc(
+      String name, String username);
 
-  boolean existsByEmailIgnoreCase(String email);
+  boolean existsByUsernameIgnoreCase(String username);
 
-  Optional<AppUser> findByEmailIgnoreCase(String email);
+  Optional<AppUser> findByUsernameIgnoreCase(String username);
 }

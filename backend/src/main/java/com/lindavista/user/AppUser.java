@@ -33,8 +33,9 @@ public class AppUser {
   @Column(nullable = false, length = 120)
   private String name;
 
-  @Column(nullable = false, unique = true, length = 160)
-  private String email;
+  /** Nombre de usuario para iniciar sesión (único, ej. "admin"). */
+  @Column(nullable = false, unique = true, length = 60)
+  private String username;
 
   /** Hash BCrypt de la contraseña. Nunca se devuelve en la API. */
   @Column(nullable = false)

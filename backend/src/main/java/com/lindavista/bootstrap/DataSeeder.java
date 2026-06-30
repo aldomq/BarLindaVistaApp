@@ -58,8 +58,8 @@ public class DataSeeder implements CommandLineRunner {
       return;
     }
     log.info("Sembrando usuarios de ejemplo (admin + encargado)...");
-    userRepo.save(user("Administrador", "admin@negocio.com", "admin1234", Role.ADMIN));
-    userRepo.save(user("Encargado", "encargado@negocio.com", "manager1234", Role.MANAGER));
+    userRepo.save(user("Administrador", "admin", "admin1234", Role.ADMIN));
+    userRepo.save(user("Encargado", "encargado", "manager1234", Role.MANAGER));
     log.info("Usuarios creados. CAMBIA estas contraseñas de ejemplo.");
   }
 
@@ -108,10 +108,10 @@ public class DataSeeder implements CommandLineRunner {
     log.info("Seed completado: categorias, productos y 1 semana contable.");
   }
 
-  private AppUser user(String name, String email, String rawPassword, Role role) {
+  private AppUser user(String name, String username, String rawPassword, Role role) {
     AppUser u = new AppUser();
     u.setName(name);
-    u.setEmail(email);
+    u.setUsername(username);
     u.setPasswordHash(encoder.encode(rawPassword));
     u.setRole(role);
     return u;

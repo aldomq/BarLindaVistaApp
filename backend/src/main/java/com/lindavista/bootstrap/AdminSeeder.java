@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Crea el usuario ADMIN inicial a partir de variables de entorno
- * (ADMIN_EMAIL / ADMIN_PASSWORD) SOLO si todavia no hay ningun usuario.
+ * (ADMIN_USERNAME / ADMIN_PASSWORD) SOLO si todavia no hay ningun usuario.
  * Asi la contraseña del admin vive en el entorno (Railway/.env), nunca en el repo.
  * No hay registro publico: los demas usuarios los crea el admin desde la app.
  */
@@ -24,14 +24,14 @@ public class AdminSeeder implements CommandLineRunner {
 
   private final UserRepository users;
   private final PasswordEncoder encoder = new BCryptPasswordEncoder();
-  private final String adminEmail;
+  private final String adminUsername;
   private final String adminPassword;
 
   public AdminSeeder(UserRepository users,
-                     @Value("${app.admin.email:}") String adminEmail,
+                     @Value("${app.admin.username:}") String adminUsername,
                      @Value("${app.admin.password:}") String adminPassword) {
     this.users = users;
-    this.adminEmail = adminEmail;
+    this.adminUsername = adminUsername;
     this.adminPassword = adminPassword;
   }
 
@@ -40,16 +40,16 @@ public class AdminSeeder implements CommandLineRunner {
     if (users.count() > 0) {
       return;
     }
-    if (adminEmail.isBlank() || adminPassword.isBlank()) {
-      log.warn("No hay usuarios y faltan ADMIN_EMAIL/ADMIN_PASSWORD: no se creo el admin inicial.");
+    if (adminUsername.isBlank() || adminPassword.isBlank()) {
+      log.warn("No hay usuarios y faltan ADMIN_USERNAME/ADMIN_PASSWORD: no se creo el admin inicial.");
       return;
     }
     AppUser admin = new AppUser();
     admin.setName("Administrador");
-    admin.setEmail(adminEmail.trim().toLowerCase());
+    admin.setUsername(adminUsername.trim().toLowerCase());
     admin.setPasswordHash(encoder.encode(adminPassword));
     admin.setRole(Role.ADMIN);
     users.save(admin);
-    log.info("Admin inicial creado: {}", admin.getEmail());
+    log.info("Admin inicial creado: {}", admin.getUsername());
   }
 }
